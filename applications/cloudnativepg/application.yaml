@@ -1,0 +1,11 @@
+name: cloudnativepg
+
+deployment:
+  namespace: so-1015-sc-101-prod
+
+helm:
+  repository:
+    name: cloudnative-pg
+    url: https://cloudnative-pg.github.io/charts
+  chart: cloudnative-pg
+  version: "0.29.1"

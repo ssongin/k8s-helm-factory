@@ -1,0 +1,4 @@
+fullnameOverride: cnpg
+
+config:
+  clusterWide: true

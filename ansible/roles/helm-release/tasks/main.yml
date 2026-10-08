@@ -1,0 +1,52 @@
+---
+- name: Validate application definition
+  ansible.builtin.assert:
+    that:
+      - application_definition.name is defined
+      - application_definition.deployment.namespace is defined
+      - application_definition.helm.repository is defined
+      - application_definition.helm.chart is defined
+      - application_definition.helm.version is defined
+    fail_msg: "Invalid application definition for {{ application_name }}"
+
+- name: Initialize Helm values files
+  ansible.builtin.set_fact:
+    helm_values_files: []
+
+- name: Add common values file
+  ansible.builtin.set_fact:
+    helm_values_files: >-
+      {{
+        helm_values_files
+        + [application_directory ~ '/values.yaml']
+      }}
+      
+- name: Add environment values file
+  ansible.builtin.set_fact:
+    helm_values_files: >-
+      {{
+        helm_values_files
+        + [
+          application_directory
+          ~ '/environments/'
+          ~ deployment_environment
+          ~ '.yaml'
+        ]
+      }}
+
+- name: Add Helm repository
+  kubernetes.core.helm_repository:
+    name: "{{ application_definition.helm.repository.name }}"
+    repo_url: "{{ application_definition.helm.repository.url }}"
+
+- name: Install or upgrade Helm release
+  kubernetes.core.helm:
+    name: "{{ application_definition.name }}"
+    chart_ref: "{{ application_definition.helm.repository.name }}/{{ application_definition.helm.chart }}"
+    chart_version: "{{ application_definition.helm.version }}"
+    release_namespace: "{{ application_definition.deployment.namespace }}"
+    create_namespace: false
+    release_state: "{{ helm_release_state }}"
+    values_files: "{{ helm_values_files }}"
+    wait: true
+    atomic: true
